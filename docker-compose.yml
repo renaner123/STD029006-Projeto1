@@ -1,0 +1,33 @@
+version: "3"
+services:
+  auditor:
+    build: ./Pipeline/auditor
+    ports:
+      - "50011:50011"
+      - "50012:50012"
+    #volumes:
+      #- /app:/app
+    #environment:
+      #SERVER_LISTEN_URI: tcp://0.0.0.0:50012
+      #SERVER_CONNECT_URI: tcp://auditor:50012
+  supervisor:
+    build: ./Pipeline/supervisor
+
+    ports:
+      - "50011:50011"
+      - "50012:50012"
+   # volumes:
+     # - /app:/app
+
+  robo:
+    build: ./Pipeline/robo
+    ports:
+      - "50011:50011"
+      - "50012:50012"
+    #volumes:
+      #- /app:/app
+
+networks:
+  default:
+    # Use a custom driver
+    driver: bridge
