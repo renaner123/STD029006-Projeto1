@@ -1,0 +1,35 @@
+version: "3"
+
+services:
+  auditor:
+    container_name: auditor
+    build: auditor/
+    
+    #networks:
+      #- rede_std
+
+  supervisor:
+    container_name: supervisor
+    build: supervisor/
+
+    #networks:
+      #- rede_std
+
+  robo:
+    container_name: robo
+    build: robo/
+    
+    #networks:
+      #- rede_std
+
+networks:
+  default:
+    # Use a custom driver
+    driver: bridge
+    #external: true
+    #name: my-nat
+  #rede_std:
+    # Use a custom driver
+    #driver: bridge
+  #rede_std2:
+   # driver: bridge
