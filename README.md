@@ -5,6 +5,7 @@
    * [Criando as imagens com o Docker](#Criando-as-imagens-com-o-Docker)
    * [Executando a aplicação com Docker run](#Executando-a-aplicação-usando-o-Docker-run)
    * [Criando as imagens com o Docker-Compose](#Criando-as-imagens-com-o-Docker-Compose)
+   * [Problemas que estão acontecendo](#Problemas-que-estão-acontecendo)
 
 <!--te-->
 
