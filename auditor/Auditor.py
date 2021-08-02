@@ -6,6 +6,9 @@ from Comandos import Commands
 from Comandos import Message 
 from Exploracao import Exploracao
 
+'''
+    Classe responsável pelo sistema auditor. serve de bind para os supervisores.
+'''
 class Auditor:
     
     NUMEROSUPERVISORES = 0
