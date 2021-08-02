@@ -71,9 +71,14 @@ docker-compose up robo
 
 ### Problemas que estão acontecendo
 
-Quando subo docker-compose não está acontecendo nada... Fica no attaching
+Quando subo docker-compose não está acontecendo nada... Fica no attaching. Isso em todos os containers.
 
-Quando tento executar com ele aparentemente executa, mas não encontra a rede.
+<div style="text-align:center">
+   <img src="./img/up.PNG" />
+</div>
+
+
+Quando tento executar com ele aparentemente executa, mas não encontra a rede. Pode ser por isso que no up não acontece nada.
 
 ```shell
 docker-compose  run -e DEBUG=1 auditor python Auditor.py 50011 1
