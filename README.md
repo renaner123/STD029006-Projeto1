@@ -4,8 +4,8 @@
    * [Descrição](#Descrição)  
    * [Criando as imagens com o Docker](#Criando-as-imagens-com-o-Docker)
    * [Executando a aplicação com Docker run](#Executando-a-aplicação-usando-o-Docker-run)
-   * [Criando as imagens com o Docker-Compose](#Criando-as-imagens-com-o-Docker-Compose)
-   * [Problemas que estão acontecendo](#Problemas-que-estão-acontecendo)
+   * [Criando as imagens com o Docker-Compose e executando](#Criando-as-imagens-com-o-Docker-Compose)
+   * [Arquivo docker-compose](#Docker-compose)
 
 <!--te-->
 
@@ -15,7 +15,7 @@
 
 Para construir as imagens do auditor, supervisor e do robo respectivamente, estando na pasta raiz, é necessário os seguintes comandos.
 
-```shel
+```docker
     docker build -t std/auditor auditor/
     docker build -t std/supervisor supervisor/
     docker build -t std/robo robo/
@@ -25,65 +25,65 @@ Para construir as imagens do auditor, supervisor e do robo respectivamente, esta
 
 Nesse exemplo, foi criado uma rede chamada rede-std com driver bridge.
 
-```shell
+```docker
 docker network create --driver bridge rede-std
 ```
 
-Necessáro iniciar primeiro o Container do auditor, a porta e a quantidade de supervisores estão no argumento do Dockerfile da pasta auditor.
+Necessáro iniciar primeiro o Container do auditor, informando a porta e a quantidade de supervisores que o auditor terá. Isso é passado no arquivo do Dockerfile na pasta auditor na camada CMD.
 
-```shell
+```docker
 docker run -it --rm --name auditor --network rede-std std/auditor
 ```
 Após subir o auditor, pode subir o supervisor e robo. Caso precise alterar a porta, estão nos Dockerfile das respectivas pastas
 
-```shell
+```docker
 docker run -it --rm --name supervisor --network rede-std std/supervisor
 ```
-```shell
+```docker
 docker run -it --rm --name robo --network rede-std std/robo
 ```
 ### Criando as imagens com o Docker-compose
 
 Para compilar os containeres usando o compose basta estar na pasta raiz 
 
-```shell
+```docker
 docker-compose build
 ```
 
 Usando o compose é necessário subir inicialmente o auditor com:
 
-```shell
+```docker
 docker-compose up auditor
 ```
 
 Após pode subir o resto com:
 
-```shell
+```docker
 docker-compose up
 ```
 
-ou se prefesir, pode subir primeiro o supervisor e depois o robo
+Nesse caso, o resto consiste em dois supervisores(supervisor e supervisor2) e dois robos(robo e robo2). 
 
-```shell
-docker-compose up supervisor
-docker-compose up robo
+### Docker compose
+
+No arquivo docker-compose.yml estão sendo instanciados os serviços dos containers do auditor, supervisor e do robo. No auditor, deve-se informar a porta em que o container ficará ouvindo os sockets do supervisor e o número de supervisores que serão conectados, conforme exemplo abaixo:
+
+```docker
+   command: python Auditor.py 50011 2
 ```
 
-### Problemas que estão acontecendo
+No supervisor, é necessário informar a porta de escuta do auditor, o nome que a rede do supervisor terá e a porta que utilizará para fazer o bind com seu robo, conforme exemplo abaixo:
 
-Quando subo docker-compose não está acontecendo nada... Fica no attaching. Isso em todos os containers.
-
-<div style="text-align:center">
-   <img src="./img/up.PNG" />
-</div>
-
-
-Quando tento executar com ele aparentemente executa, mas não encontra a rede. Pode ser por isso que no up não acontece nada.
-
-```shell
-docker-compose  run -e DEBUG=1 auditor python Auditor.py 50011 1
+```docker
+  command: python Supervisor.py 50011 supervisor 50015
 ```
+O supervisor permite ter mais de um, então para criar um novo supervisor é só criar outro serviço com o nome desejado e a porta de bind para o robo, conforme consta no arquivo docker-compose.yml
 
-<div style="text-align:center">
-   <img src="./img/run.PNG" />
-</div>
+O serviço robo, assim como o supervisor, permite criar mais de um. No caso, cada supervisor terá o seu robo, portando pode usar como argumentos o nome do supervidor e a porta que ele estará ouvindo, conforme abaixo:
+
+```docker
+   command: python Robo.py 50015 supervisor
+```
+### Demonstração do projeto em execução
+
+Terá um gif
