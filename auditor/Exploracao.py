@@ -1,6 +1,9 @@
 import zmq, json, time, socket
 import random as roll
 
+'''
+    Classe utilizada para criação do mapa a ser explorado
+'''
 class Exploracao:
                   
     BANDEIRA = 5
@@ -20,6 +23,9 @@ class Exploracao:
         self.nRobos = robos
         self.crie_matriz()
 
+    '''
+        Gera uma matriz nxn
+    '''
     def crie_matriz(self,n_linhas=tamanhoMatriz, n_colunas=tamanhoMatriz, valor=0):
     
         for i in range(n_linhas):
@@ -31,6 +37,9 @@ class Exploracao:
             self.matriz += [linha] 
         return self.matriz
 
+    '''
+        gera posição randomica das bandeiras
+    '''
     def posBandeiras(self):
     
         i = 0
@@ -43,6 +52,9 @@ class Exploracao:
             i = i +1
         return self.listPosBandeira
         
+    '''
+        gera posição randomica dos robos
+    '''
     def posRobos(self):
         i = 0
         while(i<self.nRobos):
@@ -55,15 +67,24 @@ class Exploracao:
 
         return self.listPosRobos 
 
+    '''
+        insere as bandeiras na matriz
+    '''
     def inserirBandeirasMatriz(self, coordBandeira):
         
         self.matriz[coordBandeira[0]][coordBandeira[1]] = self.BANDEIRA
         return True
 
+    '''
+        insere os robos na matriz
+    '''
     def inserirRobosMatriz(self, coordRobo, nRobo):
         self.matriz[coordRobo[0]][coordRobo[1]] = nRobo
         return True
 
+    '''
+        retorna o mapa a ser explorado
+    '''
     def gerarCampoDeExploracao(self):
 
         robo = self.posRobos()
@@ -75,8 +96,15 @@ class Exploracao:
             continue
         return self.matriz
     
+    '''
+        retorna o valor da abscissa da tupla recebida.
+    '''  
     def getAbscissa(self, coordenada):
         return coordenada[self.ABSCISSA]
+
+    '''
+        retornar o valor da ordenada da tupla recebida
+    '''
     def getOrdenada(self, coordenada):
         return coordenada[self.ORDENADA]
 

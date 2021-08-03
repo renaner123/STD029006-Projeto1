@@ -10,11 +10,17 @@ from Exploracao import Exploracao
     Classe responsável pelo sistema auditor. serve de bind para os supervisores.
 '''
 class Auditor:
+
+    '''
+        self._publish_socket: socket resonsável por enviar mensagens broadcast
+        self._router_socket: socket responsável por receber mensagens individuais de cada supervisor
+    '''
     
     NUMEROSUPERVISORES = 0
     NUMEROROBOSPRONTOS = 0
     
     def __init__(self, port, supervisores):
+
         self.port = int(port)
         self.host = "auditor"
         self.exploracao = Exploracao(3,3)
@@ -24,26 +30,27 @@ class Auditor:
         self.nSupervidores = int(supervisores)
         self.placar = dict()
         self.bandeirasCapturadas = 0
-        # cria os sockets
         self._context = zmq.Context()
         self._publish_socket = self._context.socket(zmq.PUB)
         self._router_socket = self._context.socket(zmq.ROUTER)
 
-        # bind nos sockets
+        # bind nos sockets para supervisor se conectar
         self._publish_socket.bind("tcp://" + socket.gethostbyname(self.host) + ":" + str(self.port))  # apenas para o broadcast
         self._router_socket.bind("tcp://"+ socket.gethostbyname(self.host) + ":" +str(self.port + 1))  # apenas para solicitacoes individuais
 
-        # poller
+        # cadatra os sockets no poller
         self._poller = zmq.Poller()
         self._poller.register(self._router_socket, zmq.POLLIN)  # notifica cada mensagem recebida
 
-        # imprime o ip do servidor para facilitar a vida
+        # imprime o ip do servidor
         print("O endereço do servidor PUB eh ", self.host + ":"+ str(self.port))
         print("O endereço do servidor ROUTER eh ", self.host + ":"+ str(self.port +1) + "\n")
         self.jogo_started = False        
         self.thread_run_flag = True        
 
-    
+    '''
+        Responsável por iniciar a comunicação entre os sockets atráves do Poller
+    '''   
     def start(self):
         i = 1
         while True:            
@@ -72,7 +79,8 @@ class Auditor:
                         elif(self.bandeirasCapturadas == self.exploracao.nBandeiras):
                             self._publish_socket.send_json(self.message.sendMessage(self.commands.WIN,self.placar))
                             print("Vendecor é o Supervisor ",max(self.placar, key=self.placar.get)," que capturou ", self.placar[max(self.placar, key=self.placar.get)], " bandeiras")
-                    
+                            self._publish_socket.close()
+                            self._router_socket.close()
 
             time.sleep(1)
 
@@ -86,3 +94,5 @@ if __name__ == "__main__":
 
         auditor = Auditor(port, nsupervisor)
         auditor.start()
+
+#docker rm -f $(docker ps -a -q)

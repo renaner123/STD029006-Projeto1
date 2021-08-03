@@ -13,5 +13,5 @@ RUN pip install --no-cache-dir -r requirements.txt
 EXPOSE 50011
 EXPOSE 50012
 
-CMD [ "python", "Auditor.py", "50011", "1"]
+#CMD [ "python", "Auditor.py", "50011", "2"]
 

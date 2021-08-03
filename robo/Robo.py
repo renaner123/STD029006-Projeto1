@@ -3,7 +3,15 @@ from Comandos import Commands
 from Comandos import Message 
 import zmq, random
 
+'''
+    Classe responsável pelo robô. Utilizada para capturar as bandeiras de acordo 
+    com os comandos enviados pelo supervisor
+'''
 class Robo:
+
+    '''
+        self._pair_socket: Socket responsável por se conectar no supervisor para troca de mensagens
+    '''
 
     coordRobo = []                
     BANDEIRA = 5
@@ -12,7 +20,7 @@ class Robo:
     flag = False
     stop = False
 
-    def __init__(self, port):
+    def __init__(self, port, host):
         self.port = int(port)
 
         # cria os sockets
@@ -21,26 +29,37 @@ class Robo:
         self.message = Message()
         self.commands = Commands()
         self.posInicial = []
-        self.host = "supervisor"
+        self.host = host
         self.posDestino = []
         self.stop = False
 
-        self._pair_socket.connect("tcp://" + socket.gethostbyname(self.host) + ":" + str(self.port + 2))
+        self._pair_socket.connect("tcp://" + socket.gethostbyname(self.host) + ":" + str(self.port))
 
-        # poller
+        # cadatra os sockets no poller
         self._poller = zmq.Poller()
         self._poller.register(self._pair_socket, zmq.POLLIN)
         
-
+    '''
+        retorna o valor da abscissa da tupla recebida.
+    '''
     def getAbscissa(self, coordenada):
         return coordenada[self.ABSCISSA]
 
+    '''
+        retornar o valor da ordenada da tupla recebida
+    '''
     def getOrdenada(self, coordenada):
         return coordenada[self.ORDENADA]
-    
+
+    '''
+        Utilizado para ficar atualizado ao supoervisor a posição atual do robo
+    '''
     def sendPosToSupervisor(self, pos):
         self._pair_socket.send_json(self.message.sendMessage(self.commands.POS, pos))
 
+    '''
+        Utilizado para iniciar a movimentação do robo para as posições informadas pelo supervisor
+    '''
     def startRobo(self,coordInicial, coordBandeira):
         auxX = self.getAbscissa(coordBandeira)        
         auxY = self.getOrdenada(coordBandeira)
@@ -89,6 +108,9 @@ class Robo:
         self.flag=False
         self.startRobo(self.coordRobo,coordBandeira) """
 
+    '''
+        Responsável por iniciar a comunicação entre os sockets atráves do Poller
+    '''
     def start(self):
 
         self._pair_socket.send_json(self.message.sendMessage(self.commands.READY, "OK"))    
@@ -114,13 +136,12 @@ class Robo:
             time.sleep(1)
 
 if __name__ == "__main__":
-    robo = Robo(50011)
 
-    robo.start()
-    if (len(sys.argv) <= 1):
-            print("Uso: python3 supervisor.py port ");
+    if (len(sys.argv) <= 2):
+            print("Uso: python3 supervisor.py port IP_Supervisor ");
     else:    
         port = sys.argv[1]
+        host = sys.argv[2]
 
-        robo = Robo(port)
+        robo = Robo(port, host)
         robo.start() 
