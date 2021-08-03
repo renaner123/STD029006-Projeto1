@@ -19,8 +19,8 @@ class Exploracao:
     nRobos = 2
 
     def __init__(self, bandeiras, robos):     
-        self.nBandeiras = bandeiras
-        self.nRobos = robos
+        self.nBandeiras = int(bandeiras)
+        self.nRobos = int(robos)
         self.crie_matriz()
 
     '''

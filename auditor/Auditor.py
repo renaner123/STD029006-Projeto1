@@ -19,11 +19,11 @@ class Auditor:
     NUMEROSUPERVISORES = 0
     NUMEROROBOSPRONTOS = 0
     
-    def __init__(self, port, supervisores):
+    def __init__(self, port, bandeiras, supervisores):
 
         self.port = int(port)
         self.host = "auditor"
-        self.exploracao = Exploracao(3,3)
+        self.exploracao = Exploracao(int(bandeiras),int(supervisores))
         self.matrizExploracao = self.exploracao.gerarCampoDeExploracao()
         self.message = Message()
         self.commands = Commands()
@@ -33,6 +33,7 @@ class Auditor:
         self._context = zmq.Context()
         self._publish_socket = self._context.socket(zmq.PUB)
         self._router_socket = self._context.socket(zmq.ROUTER)
+        self.bandeira = False
 
         # bind nos sockets para supervisor se conectar
         self._publish_socket.bind("tcp://" + socket.gethostbyname(self.host) + ":" + str(self.port))  # apenas para o broadcast
@@ -57,6 +58,7 @@ class Auditor:
             polled = dict(self._poller.poll())
             if self._router_socket in polled:
                 id_, msg = self._router_socket.recv_multipart()
+                self.bandeira = False
                 #process_id, val = json.loads(msg)                
                 msgDecode = ast.literal_eval(self.message.recvMessage(msg))   
                 print(msgDecode)      
@@ -69,30 +71,33 @@ class Auditor:
                     if(self.NUMEROSUPERVISORES == self.nSupervidores):
                         self._publish_socket.send_json(self.message.sendMessage(self.commands.START,"OK"))
                 elif(self.commands.UPDATE_FLAGS in msgDecode):
-                    if(self.bandeirasCapturadas<self.exploracao.nBandeiras):
-                        self.bandeirasCapturadas = self.bandeirasCapturadas + 1
-                        self.placar[msgDecode[self.commands.ID]] = self.placar[msgDecode[self.commands.ID]] +1
-                        if(self.bandeirasCapturadas < self.exploracao.nBandeiras):
-                            posDict = ast.literal_eval(self.message.sendMessage(self.commands.UPDATE_FLAGS,msgDecode[self.commands.UPDATE_FLAGS]))
-                            posDict['robo'] = msgDecode[self.commands.ID]
-                            self._publish_socket.send_json(self.message.toJson(posDict)) 
-                        elif(self.bandeirasCapturadas == self.exploracao.nBandeiras):
-                            self._publish_socket.send_json(self.message.sendMessage(self.commands.WIN,self.placar))
-                            print("Vendecor é o Supervisor ",max(self.placar, key=self.placar.get)," que capturou ", self.placar[max(self.placar, key=self.placar.get)], " bandeiras")
-                            self._publish_socket.close()
-                            self._router_socket.close()
+                    if(self.bandeira == False):
+                        if(self.bandeirasCapturadas<self.exploracao.nBandeiras):
+                            self.bandeirasCapturadas = self.bandeirasCapturadas + 1
+                            self.placar[msgDecode[self.commands.ID]] = self.placar[msgDecode[self.commands.ID]] +1
+                            if(self.bandeirasCapturadas < self.exploracao.nBandeiras):
+                                posDict = ast.literal_eval(self.message.sendMessage(self.commands.UPDATE_FLAGS,msgDecode[self.commands.UPDATE_FLAGS]))
+                                posDict['robo'] = msgDecode[self.commands.ID]
+                                self._publish_socket.send_json(self.message.toJson(posDict)) 
+                                self.bandeira == True
+                            elif(self.bandeirasCapturadas == self.exploracao.nBandeiras):
+                                self._publish_socket.send_json(self.message.sendMessage(self.commands.WIN,self.placar))
+                                print("Vendecor é o Supervisor ",max(self.placar, key=self.placar.get)," que capturou ", self.placar[max(self.placar, key=self.placar.get)], " bandeiras")
+                                self._publish_socket.close()
+                                self._router_socket.close()
 
             time.sleep(1)
 
 if __name__ == "__main__":
 
-    if (len(sys.argv) <= 2):
-            print("Uso: python3 auditor.py port nsupervisores");
+    if (len(sys.argv) <= 3):
+            print("Uso: python3 auditor.py port nbandeiras nsupervisores");
     else:    
         port = sys.argv[1]
-        nsupervisor = sys.argv[2]
+        nbandeiras = sys.argv[2]
+        nsupervisor = sys.argv[3]
 
-        auditor = Auditor(port, nsupervisor)
+        auditor = Auditor(port, nbandeiras, nsupervisor)
         auditor.start()
 
 #docker rm -f $(docker ps -a -q)
