@@ -6,7 +6,7 @@ services:
     build: auditor/
     environment:
       PYTHONUNBUFFERED: 1
-    command: python Auditor.py 50011 2
+    command: python Auditor.py 50011 3 2
 
   supervisor:
     container_name: supervisor
