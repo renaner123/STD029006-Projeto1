@@ -92,8 +92,10 @@ class Exploracao:
 
         for i in range(0,self.nBandeiras):
             self.inserirBandeirasMatriz(bandeira[i])
+
+        for i in range(0,self.nRobos):
             self.inserirRobosMatriz(robo[i],i+1)
-            continue
+
         return self.matriz
     
     '''
