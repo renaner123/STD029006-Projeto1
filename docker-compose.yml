@@ -4,23 +4,41 @@ services:
   auditor:
     container_name: auditor
     build: auditor/
-    
-    #networks:
-      #- rede_std
+    environment:
+      PYTHONUNBUFFERED: 1
+    command: python Auditor.py 50011 2
 
   supervisor:
     container_name: supervisor
     build: supervisor/
-
-    #networks:
-      #- rede_std
+    environment:
+      PYTHONUNBUFFERED: 1
+    command: python Supervisor.py 50011 supervisor 50015
 
   robo:
     container_name: robo
     build: robo/
+    environment:
+      PYTHONUNBUFFERED: 1
+    command: python Robo.py 50015 supervisor
+
+  supervisor2:
+    container_name: supervisor2
+    build: supervisor/
+    environment:
+      PYTHONUNBUFFERED: 1
+    command: python Supervisor.py 50011 supervisor2 50016
+  robo2:
+    container_name: robo2
+    build: robo/
+    environment:
+      PYTHONUNBUFFERED: 1
+    command: python Robo.py 50016 supervisor2
     
-    #networks:
-      #- rede_std
+
+
+
+    
 
 networks:
   default:
