@@ -29,6 +29,8 @@ class Supervisor:
         self.host = hostSupervisor
         self.mapaExploracao = []
         self.posBandeiras = []
+        self.posInicialRobo = []
+        self.posRobo = []
         self.meuId = 0
         self.bandeirasCapturadas = 0
         self.idOK = False
@@ -59,7 +61,20 @@ class Supervisor:
                     posicoes.append((i,y))
        
         return posicoes
+    
+    def findPosicaoMaisProxima(self,valorProcurado, matriz):
+        auxPos = []
+        auxValor = list(valorProcurado)
 
+        auxCont = sum(max(matriz)) + sum(auxValor)
+
+        for i in matriz:
+            aux = (abs((i[0]+i[1]) - sum(auxValor)))
+            if(aux < auxCont):
+                auxCont = aux
+                auxPos = i
+
+        return tuple(auxPos)
     '''
         Responsável por iniciar a comunicação entre os sockets atráves do Poller
     '''
@@ -78,19 +93,20 @@ class Supervisor:
                     self.posBandeiras = self.findPosicao(Exploracao.BANDEIRA,self.mapaExploracao)
                 elif(self.commands.START in msg):
                     time.sleep(2)
-                    self._pair_socket.send_json(self.message.sendMessage(self.commands.MOVE_TO,min(self.posBandeiras)))  
+                    print(self.posBandeiras)
+                    self._pair_socket.send_json(self.message.sendMessage(self.commands.MOVE_TO,self.findPosicaoMaisProxima(tuple(self.posInicialRobo),self.posBandeiras))) 
+                    posExcluir = min(self.posBandeiras)
+                    del (self.posBandeiras[self.posBandeiras.index(tuple(posExcluir))])                     
                 elif(self.commands.UPDATE_FLAGS in msg):
                     self.bandeirasCapturadas = self.bandeirasCapturadas +1
-                    posExcluir = msg[self.commands.UPDATE_FLAGS]
-                    del (self.posBandeiras[self.posBandeiras.index(tuple(posExcluir))])
-                    if(len(self.posBandeiras)>=1):
-                        self._pair_socket.send_json(self.message.sendMessage(self.commands.MOVE_TO,min(self.posBandeiras)))    
+                    if(msg['robo']!=self.meuId):
+                        self._pair_socket.send_json(self.message.sendMessage(self.commands.STOP,self.commands.STOP))
+                    self._pair_socket.send_json(self.message.sendMessage(self.commands.MOVE_TO,min(self.posBandeiras))) 
                 elif(self.commands.WIN in msg):
                     self._pair_socket.send_json(self.message.sendMessage(self.commands.STOP,"stop"))
                     self._pair_socket.close()
                     self._subscribe_socket.close()
-                    self._dealer_socket.close()
-            
+                    self._dealer_socket.close()            
             elif self._pair_socket in polled:
                 msg = self._pair_socket.recv_json()
                 print("Mensagem do Robo: ",msg)
@@ -98,16 +114,24 @@ class Supervisor:
                     self._dealer_socket.send_json(self.message.sendMessage(self.commands.READY,"ok"))
                 elif(self.commands.CONFIRM in msg):
                     self._dealer_socket.send_json(self.message.sendMessage(self.commands.CONFIRM,"ok"))
-                elif(self.commands.GET_FLAG in msg):
-                    posDict = ast.literal_eval(self.message.sendMessage(self.commands.UPDATE_FLAGS,min(self.posBandeiras)))
+                elif(self.commands.GET_FLAG in msg):                
+                    auxDic = ast.literal_eval(msg)
+                    posDict = ast.literal_eval(self.message.sendMessage(self.commands.UPDATE_FLAGS,auxDic[self.commands.GET_FLAG]))
                     posDict[self.commands.ID] = self.meuId
                     self._dealer_socket.send_json(self.message.toJson(posDict))
+                    posExcluir = tuple(auxDic[self.commands.GET_FLAG])
+                    if(posExcluir in self.posBandeiras):
+                        del (self.posBandeiras[self.posBandeiras.index((posExcluir))])  
+                elif(self.commands.POS in msg):
+                    auxDic = ast.literal_eval(msg)
+                    self.posRobo = tuple(auxDic[self.commands.POS])
 
             elif self._dealer_socket in polled:
                 msg = self._dealer_socket.recv() # Para pegar o número o supervisor terá... 1, 2 ...
                 self.meuId = int(msg.decode())  
-                print(self.meuId)    
-                dict_pos = self.message.sendMessage(self.commands.POS_INICIAL,min(self.findPosicao(self.meuId,self.mapaExploracao)))
+                print("Recebeu o ID ",self.meuId)
+                self.posInicialRobo = min(self.findPosicao(self.meuId,self.mapaExploracao))
+                dict_pos = self.message.sendMessage(self.commands.POS_INICIAL,self.posInicialRobo)
                 self._pair_socket.send_json(dict_pos)
             time.sleep(1)
 
