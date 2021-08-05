@@ -21,20 +21,21 @@ class Auditor:
     
     def __init__(self, port, bandeiras, supervisores):
 
-        self.port = int(port)
-        self.host = "auditor"
-        self.exploracao = Exploracao(int(bandeiras),int(supervisores))
-        self.matrizExploracao = self.exploracao.gerarCampoDeExploracao()
-        self.message = Message()
-        self.commands = Commands()
-        self.nSupervidores = int(supervisores)
-        self.placar = dict()
-        self.confirmCheck = 0
-        self.bandeirasCapturadas = 0
-        self.bandeiras = []
-        self._context = zmq.Context()
-        self._publish_socket = self._context.socket(zmq.PUB)
-        self._router_socket = self._context.socket(zmq.ROUTER)
+        self.port = int(port)                                               # porta que socket estará ouvindo
+        self.host = "auditor"                                               # nome que o container irá usar na rede
+        self.exploracao = Exploracao(int(bandeiras),int(supervisores))      # gera uma objeto de Exploracao
+        self.matrizExploracao = self.exploracao.gerarCampoDeExploracao()    # gera o mapa a ser explorado
+        self.message = Message()                                            # Usa para formatar as mensagens a serem enviadas pelo socket
+        self.commands = Commands()                                          # gerar um objeto "ENUM" para usar como comandos
+        self.nSupervidores = int(supervisores)                              # Recebe quantidade de supervisores que auditor ficará esperando conectar
+        self.placar = dict()                                                # Placar a ser exibido ao fim da exploracao
+        self.confirmCheck = 0                                               # Checar a quantidade de supervisores com robo pronto
+        self.bandeirasCapturadas = 0                                        # Salvar quantidade de bandeiras já capturadas
+        self.bandeiras = []                                                 # Gera uma lista com as bandeiras capturadas para auxiliar
+        self._context = zmq.Context()                                       
+
+        self._publish_socket = self._context.socket(zmq.PUB)                # Gera contexto publish do ZMQ
+        self._router_socket = self._context.socket(zmq.ROUTER)              # Gera contexto router do ZMQ
         self.bandeira = False
 
         # bind nos sockets para supervisor se conectar
@@ -57,21 +58,28 @@ class Auditor:
     def start(self):
         i = 1
         while True:            
+            ## verifica se algum socket receber alguma mensagem
             polled = dict(self._poller.poll())
             if self._router_socket in polled:
                 id_, msg = self._router_socket.recv_multipart()
                 self.bandeira = False
                 #process_id, val = json.loads(msg)                
-                msgDecode = ast.literal_eval(self.message.recvMessage(msg))         
+                msgDecode = ast.literal_eval(self.message.recvMessage(msg))   
+                # Se receber READY do supervisor, implica que o container subiu. Assim que NUMEROSUPERVISORES for igual ao número de supervisores, envia o mapa para todos.    
                 if(self.commands.READY in msgDecode):
                     self.NUMEROSUPERVISORES = self.NUMEROSUPERVISORES + 1
                     self.placar[self.NUMEROSUPERVISORES] = 0
                     self._router_socket.send_multipart([id_, str(self.NUMEROSUPERVISORES).encode("UTF-8")])  
-                    self._publish_socket.send_json(self.message.sendMessage(self.commands.MAP,self.matrizExploracao))  
+                    self._publish_socket.send_json(self.message.sendMessage(self.commands.MAP,self.matrizExploracao))
+
+                # CONFIRM igual ao número de supervisores implica que os robos já estão na posição inicial, prontos para iniciar, então auditor envia o comando START  
                 elif((self.commands.CONFIRM in msgDecode)):
                     self.confirmCheck = self.confirmCheck + 1
                     if(self.confirmCheck == self.nSupervidores):
                         self._publish_socket.send_json(self.message.sendMessage(self.commands.START,"OK"))
+
+                # UPDATE_FLAGS representa a captura de uma bandeira pelo robo. Auditor envia mensagem para todos informando a captura e quem capturou. 
+                # Após capturar todas, envia o placar e printa no console o vencedor
                 elif(self.commands.UPDATE_FLAGS in msgDecode):                                    
                     if((msgDecode[self.commands.UPDATE_FLAGS] not in self.bandeiras)):
                         self.bandeiras.append(msgDecode[self.commands.UPDATE_FLAGS])    

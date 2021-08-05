@@ -13,25 +13,25 @@ class Robo:
         self._pair_socket: Socket responsável por se conectar no supervisor para troca de mensagens
     '''
 
-    coordRobo = []                
-    BANDEIRA = 5
-    ABSCISSA = 0
-    ORDENADA = 1
-    flag = False
-    stop = False
+    coordRobo = []                              # Atualizar coordenada atual do robo                   
+    BANDEIRA = 5                                # Usado para representar uma bandeira no mapa
+    ABSCISSA = 0                                # Usado para ver a posição de x da coordenada
+    ORDENADA = 1                                # Usado para ver a posição de y da coordenada
+    flag = False                                # Informar se a bandeira foi capturada
+    stop = False                                # Parar a movimentação do robo
 
     def __init__(self, port, host):
         self.port = int(port)
 
-        # cria os sockets
+        # cria os sockets e gera o contexto PAIR com supervisor
         self._context = zmq.Context()
         self._pair_socket = self._context.socket(zmq.PAIR)
-        self.message = Message()
-        self.commands = Commands()
-        self.posInicial = []
-        self.host = host
-        self.posDestino = []
-        self.stop = False
+        self.message = Message()                # Gera objeto para formatar mensagens a serem enviadas pelo socket
+        self.commands = Commands()              # Gera objeto para enviar comandos
+        self.posInicial = []                    # Recebe posição inicial do robo
+        self.host = host                        # Endereço onde o socket irá conectar
+        self.posDestino = []                    # Informar o destino do robo, recebido pelo supervisor
+        self.stop = False                       # Usado para parar movimentação do robo
 
         self._pair_socket.connect("tcp://" + socket.gethostbyname(self.host) + ":" + str(self.port))
 
@@ -62,10 +62,11 @@ class Robo:
     '''
     def startRobo(self,coordInicial, coordBandeira):
         self.stop = False
-        auxX = self.getAbscissa(coordBandeira)        
-        auxY = self.getOrdenada(coordBandeira)
-        self.coordRobo = coordInicial
+        auxX = self.getAbscissa(coordBandeira)      # Retorna valor de x da coordenada
+        auxY = self.getOrdenada(coordBandeira)      # Retorna valor de y da coordenada
+        self.coordRobo = coordInicial               # Passa posição inicial para o robo
 
+        ## Anda primeiro no sentido de x até a posição destino e depois no sentido de y
         while(self.stop == False):
             while ((self.getAbscissa(self.coordRobo) < auxX ) or (self.getAbscissa(self.coordRobo) > auxX )):
                 if((self.getAbscissa(self.coordRobo) < auxX)):
@@ -119,12 +120,15 @@ class Robo:
             if self._pair_socket in polled:
                 msg = self.message.recvMessage(self._pair_socket.recv_json())
                 print(msg)
+                # Recebe POS_INICIAL e seta na posInicial do robo
                 if(self.commands.POS_INICIAL in msg):
                     self.posInicial = msg[self.commands.POS_INICIAL]
                     self._pair_socket.send_json(self.message.sendMessage(self.commands.CONFIRM,"OK"))
+                # Recebe coordenada que deverá ir
                 elif(self.commands.MOVE_TO in msg):
                     self.posDestino = msg[self.commands.MOVE_TO]
                     self.startRobo(self.posInicial,self.posDestino)
+                # Comando para parar a movimentação
                 elif(self.commands.STOP in msg):
                     self.stop = True
                 """   
