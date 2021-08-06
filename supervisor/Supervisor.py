@@ -100,17 +100,20 @@ class Supervisor:
                 # START informa que os robos podem começar a explorar o mapa. Supervisor envia a posição de destino e remove da lista posBandeiras
                 elif(self.commands.START in msg):
                     time.sleep(2)
-                    print(self.posBandeiras)
-                    self._pair_socket.send_json(self.message.sendMessage(self.commands.MOVE_TO,self.findPosicaoMaisProxima(tuple(self.posInicialRobo),self.posBandeiras))) 
-                    posExcluir = min(self.posBandeiras)
-                    del (self.posBandeiras[self.posBandeiras.index(tuple(posExcluir))])    
+                    posDestino = self.findPosicaoMaisProxima(tuple(self.posInicialRobo),self.posBandeiras)
+                    self._pair_socket.send_json(self.message.sendMessage(self.commands.MOVE_TO,posDestino))
+                    del (self.posBandeiras[self.posBandeiras.index(tuple(posDestino))])    
 
                 # UPDATE_FLAGS recebe bandeira que já foi capturada e envia nova coordenada para o robo                
                 elif(self.commands.UPDATE_FLAGS in msg):
                     self.bandeirasCapturadas = self.bandeirasCapturadas +1
+                    posDestino = self.findPosicaoMaisProxima(tuple(self.posRobo),self.posBandeiras)
+  
                     if(msg['robo']!=self.meuId):
                         self._pair_socket.send_json(self.message.sendMessage(self.commands.STOP,self.commands.STOP))
-                    self._pair_socket.send_json(self.message.sendMessage(self.commands.MOVE_TO,min(self.posBandeiras))) 
+                    self._pair_socket.send_json(self.message.sendMessage(self.commands.MOVE_TO,posDestino))
+                    del (self.posBandeiras[self.posBandeiras.index(tuple(posDestino))])     
+                    #self._pair_socket.send_json(self.message.sendMessage(self.commands.MOVE_TO,min(self.posBandeiras))) 
                 
                 # WIN informa que a partida encerrou e contem o placar
                 elif(self.commands.WIN in msg):
@@ -139,7 +142,6 @@ class Supervisor:
                     posExcluir = tuple(auxDic[self.commands.GET_FLAG])
                     if(posExcluir in self.posBandeiras):
                         del (self.posBandeiras[self.posBandeiras.index((posExcluir))])
-
                 # Atualiza posição atual do robo  
                 elif(self.commands.POS in msg):
                     auxDic = ast.literal_eval(msg)

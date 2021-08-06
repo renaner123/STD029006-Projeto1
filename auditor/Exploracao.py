@@ -10,7 +10,7 @@ class Exploracao:
     ABSCISSA = 0
     ORDENADA = 1
     flag = False
-    tamanhoMatriz = 15
+    tamanhoMatriz = 12
     listPosBandeira = []
     listPosRobos = []
     coordRobo = []

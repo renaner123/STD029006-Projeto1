@@ -5,6 +5,7 @@
    * [Funcionalidades implementadas](#Funcionalidades-implementadas)  
    * [Criando as imagens com o Docker-Compose e executando](#Criando-as-imagens-com-o-Docker-Compose)
    * [Arquivo docker-compose](#Docker-compose)
+   * [Demonstração do projeto em execução](#Demonstração-do-projeto-em-execução)
    * [Usando a aplicação somente com Dockerfile](#Criando-as-imagens-com-o-Docker)
 <!--te-->
 
@@ -49,7 +50,11 @@ Após pode subir o resto com:
 docker-compose up
 ```
 
-Nesse caso, o resto consiste em dois supervisores(supervisor e supervisor2) e dois robos(robo e robo2). 
+Nesse caso, o resto consiste em dois supervisores(supervisor e supervisor2) e dois robos(robo e robo2). Caso queira garantir que os serviços irão subir na ordem correta e sem conflitar, pode-se executar da seguinte maneira
+
+```docker
+   docker-compose up supervisor robo supervisor2 robo2
+```
 
 ### Docker compose
 
@@ -73,7 +78,7 @@ O serviço robo, assim como o supervisor, permite criar mais de um. No caso, cad
 ```
 ### Demonstração do projeto em execução
 
-Terá um gif
+![](img/execucao.gif)
 
 
 ### Criando as imagens com o Docker
