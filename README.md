@@ -11,7 +11,7 @@
 
 ### Projeto proposto
 
-O projeto proposto pode ser visto neste [arquivo](img/projeto1.pdf).
+O projeto proposto pode ser visto neste [arquivo](img/projeto1.pdf). Em resumo é um sistema de Captura de bandeiras com robôs autônomos usando PyZMQ fazendo uso de contêineres Docker para os sistemas auditor, supervidor e robô.
 
 ### Funcionalidades implementadas
 
