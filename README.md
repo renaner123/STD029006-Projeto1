@@ -1,3 +1,5 @@
+[![Docker Image CI](https://github.com/renaner123/STD029006-Projeto1/actions/workflows/docker-image.yml/badge.svg)](https://github.com/renaner123/STD029006-Projeto1/actions/workflows/docker-image.yml)
+
 ## Captura de bandeiras com robôs autônomos
 
 <!--ts-->
